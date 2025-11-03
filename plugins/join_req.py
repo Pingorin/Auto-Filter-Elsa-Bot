@@ -24,18 +24,26 @@ async def chat_member_update_handler(client: Client, message: ChatMemberUpdated)
     Jab user ka status badle (approve, decline, cancel),
     use 'pending' list se remove kar do.
     """
-    if not message.new_chat_member:
-        return
-
-    user_id = message.new_chat_member.user.id
+    user_id = None
     chat_id = message.chat.id
 
+    # <--- FIX: User ID ko new_chat_member (approve) ya old_chat_member (dismiss) se nikalo
+    if message.new_chat_member:
+        user_id = message.new_chat_member.user.id
+    elif message.old_chat_member:
+        user_id = message.old_chat_member.user.id
+    
+    if not user_id:
+        # Agar user_id phir bhi na mile, toh event ko ignore karo
+        print(f"Could not determine user_id from chat_member_updated event in chat {chat_id}")
+        return
+
     try:
-        # Jaise hi koi status update aaye, user ko pending list se hata do.
-        # Kyunki ab woh ya toh member hai (approved) ya left (declined/cancelled).
+        # Ab user_id mil गया hai.
+        # Use pending list se hamesha remove kar do, chaahe approve ho ya dismiss.
         await db.remove_join_request(user_id, chat_id)
     except Exception as e:
-        print(f"Error cleaning up join request: {e}")
+        print(f"Error cleaning up join request for user {user_id} in chat {chat_id}: {e}")
 
 
 @Client.on_message(filters.command("delreq") & filters.private & filters.user(ADMINS))
@@ -43,6 +51,6 @@ async def del_requests(client, message):
     """
     Admin command: Pending list ko poori tarah clear karne ke liye.
     """
-    await db.del_join_req()    
+    # <--- FIX: Changed db.del_join_req() to the new function db.clear_all_join_requests()
+    await db.clear_all_join_requests()    
     await message.reply("<b>⚙️ ꜱᴜᴄᴄᴇꜱꜱғᴜʟʟʏ ᴘᴇɴᴅɪɴɢ ᴊᴏɪɴ ʀᴇQᴜᴇꜱᴛ ʟᴏɢꜱ ᴅᴇʟᴇᴛᴇᴅ</b>")
-
