@@ -65,7 +65,7 @@ async def start(client: Client, message):
             
             if len(message.command) > 1 and message.command[1] != "subscribe":
                 btn.append(
-                    [InlineKeyboardButton("Try Again ♻️", url=f"https"//t.me/{temp.U_NAME}?start={message.command[1]}")]
+                    [InlineKeyboardButton("Try Again ♻️", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")]
                 )
             
             # --- YAHAN BADLAV KIYA GAYA ---
