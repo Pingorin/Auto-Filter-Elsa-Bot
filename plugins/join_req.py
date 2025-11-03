@@ -18,40 +18,37 @@ async def join_req_handler(client, message: ChatJoinRequest):
         logger.error(f"Error in join_req_handler: {e}")
 
 
-# Component 2: Database Cleanup jab user approve/decline/cancel hota hai
+# Component 2: Database Cleanup (Corrected Logic)
 @Client.on_chat_member_updated(filters.chat(AUTH_CHANNEL))
 async def member_update_handler(client, message: ChatMemberUpdated):
     try:
-        # Check karein agar new_chat_member attribute hai
+        # Yeh check bilkul sahi hai, ise rehne dein
         if not message.new_chat_member:
             return
 
         user_id = message.new_chat_member.user.id
         
-        # Check karein agar user pending list mein tha
+        # Check karein agar user hamari pending list mein tha
         if await db.find_join_req(user_id):
             
-            # Case 1: Admin ne approve kiya
-            if message.new_chat_member.status in [
-                enums.ChatMemberStatus.MEMBER, 
-                enums.ChatMemberStatus.ADMINISTRATOR, 
-                enums.ChatMemberStatus.OWNER
+            new_status = message.new_chat_member.status
+            
+            # Agar naya status 'pending' ke alawa kuch bhi hai
+            # (matlab approve, decline, ya cancel ho gaya)
+            # toh use list se hamesha hata do.
+            if new_status in [
+                enums.ChatMemberStatus.MEMBER,       # Case: Approved
+                enums.ChatMemberStatus.ADMINISTRATOR, # Case: Approved (as admin)
+                enums.ChatMemberStatus.OWNER,         # Case: Approved (as owner)
+                enums.ChatMemberStatus.RESTRICTED,  # Case: Approved (but restricted)
+                enums.ChatMemberStatus.LEFT,        # Case: Declined by admin / Cancelled by user
+                enums.ChatMemberStatus.BANNED       # Case: Banned / Declined
             ]:
                 await db.remove_join_req(user_id)
-                logger.info(f"User {user_id} approved and removed from pending list.")
-            
-            # Case 2: Admin ne decline kiya YA user ne khud cancel kiya
-            # Check karein agar old_chat_member tha (matlab status change hua hai)
-            elif message.old_chat_member and message.old_chat_member.status == enums.ChatMemberStatus.MEMBER:
-                 if message.new_chat_member.status in [
-                    enums.ChatMemberStatus.LEFT, 
-                    enums.ChatMemberStatus.BANNED
-                ]:
-                    await db.remove_join_req(user_id)
-                    logger.info(f"User {user_id} request declined/cancelled and removed from pending list.")
+                logger.info(f"User {user_id} status updated to {new_status}. Removed from pending list.")
 
     except AttributeError:
-        # Kuch ChatMemberUpdated events mein new_chat_member nahi hota (jaise channel title change)
+        # Kuch events (jaise title change) mein new_chat_member nahi hota
         pass
     except Exception as e:
         logger.error(f"Error in member_update_handler: {e}")
