@@ -310,24 +310,24 @@ class Database:
         }))
     
     async def add_join_request(self, user_id, chat_id):
-    """User ko pending request list mein add karta hai"""
-    # Upsert=True ka matlab hai ki agar user pehle se hai, toh bhi error nahi aayega
-    await self.join_requests.update_one(
-        {'user_id': user_id, 'chat_id': chat_id},
-        {'$set': {'timestamp': datetime.datetime.now()}},
-        upsert=True
-    )
+        """User ko pending request list mein add karta hai"""
+        # Upsert=True ka matlab hai ki agar user pehle se hai, toh bhi error nahi aayega
+        await self.join_requests.update_one(
+            {'user_id': user_id, 'chat_id': chat_id},
+            {'$set': {'timestamp': datetime.datetime.now()}},
+            upsert=True
+        )
 
-async def is_join_request_pending(self, user_id, chat_id):
-    """Check karta hai ki user pending list mein hai ya nahi"""
-    return bool(await self.join_requests.find_one(
-        {'user_id': user_id, 'chat_id': chat_id}
-    ))
+    async def is_join_request_pending(self, user_id, chat_id):
+        """Check karta hai ki user pending list mein hai ya nahi"""
+        return bool(await self.join_requests.find_one(
+            {'user_id': user_id, 'chat_id': chat_id}
+        ))
 
-async def remove_join_request(self, user_id, chat_id):
-    """User ko pending request list se remove karta hai"""
-    await self.join_requests.delete_one(
-        {'user_id': user_id, 'chat_id': chat_id}
-    )
-    
+    async def remove_join_request(self, user_id, chat_id):
+        """User ko pending request list se remove karta hai"""
+        await self.join_requests.delete_one(
+            {'user_id': user_id, 'chat_id': chat_id}
+        )
+
 db = Database()
