@@ -6,7 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Component 1: Jab user join request bhejta hai
+# Component 1: Jab user join request bhejta hai (Yeh pehle se sahi hai)
 @Client.on_chat_join_request(filters.chat(AUTH_CHANNEL))
 async def join_req_handler(client, message: ChatJoinRequest):
     user_id = message.from_user.id
@@ -18,11 +18,11 @@ async def join_req_handler(client, message: ChatJoinRequest):
         logger.error(f"Error in join_req_handler: {e}")
 
 
-# Component 2: Database Cleanup (Corrected Logic)
+# Component 2: Database Cleanup (Old aur New Status Dono Check Karega)
 @Client.on_chat_member_updated(filters.chat(AUTH_CHANNEL))
 async def member_update_handler(client, message: ChatMemberUpdated):
     try:
-        # Yeh check bilkul sahi hai, ise rehne dein
+        # Check karein agar new_chat_member attribute hai
         if not message.new_chat_member:
             return
 
@@ -32,20 +32,39 @@ async def member_update_handler(client, message: ChatMemberUpdated):
         if await db.find_join_req(user_id):
             
             new_status = message.new_chat_member.status
-            
-            # Agar naya status 'pending' ke alawa kuch bhi hai
-            # (matlab approve, decline, ya cancel ho gaya)
-            # toh use list se hamesha hata do.
+            old_status = message.old_chat_member.status if message.old_chat_member else None
+
+            # --- YEH HAI NAYA LOGIC ---
+
+            # Case 1: Admin ne request Approve ki
+            # User 'LEFT' (ya None) se 'MEMBER' ya 'RESTRICTED' bana
             if new_status in [
-                enums.ChatMemberStatus.MEMBER,       # Case: Approved
-                enums.ChatMemberStatus.ADMINISTRATOR, # Case: Approved (as admin)
-                enums.ChatMemberStatus.OWNER,         # Case: Approved (as owner)
-                enums.ChatMemberStatus.RESTRICTED,  # Case: Approved (but restricted)
-                enums.ChatMemberStatus.LEFT,        # Case: Declined by admin / Cancelled by user
-                enums.ChatMemberStatus.BANNED       # Case: Banned / Declined
+                enums.ChatMemberStatus.MEMBER,
+                enums.ChatMemberStatus.ADMINISTRATOR,
+                enums.ChatMemberStatus.OWNER,
+                enums.ChatMemberStatus.RESTRICTED
+            ] and old_status not in [
+                enums.ChatMemberStatus.MEMBER,
+                enums.ChatMemberStatus.ADMINISTRATOR,
+                enums.ChatMemberStatus.OWNER,
+                enums.ChatMemberStatus.RESTRICTED
             ]:
                 await db.remove_join_req(user_id)
-                logger.info(f"User {user_id} status updated to {new_status}. Removed from pending list.")
+                logger.info(f"User {user_id} APPROVED and removed from pending list.")
+
+            # Case 2: Admin ne request Decline/Dismiss ki YA User ne khud Cancel ki
+            # User 'LEFT' (ya None) se 'LEFT' hi raha (status change nahi hua)
+            # Ya 'BANNED' ho gaya
+            elif new_status in [enums.ChatMemberStatus.LEFT, enums.ChatMemberStatus.BANNED]:
+                # Yeh check zaroori hai taaki 'Member' ke 'Left' hone par na chale
+                if old_status not in [
+                    enums.ChatMemberStatus.MEMBER,
+                    enums.ChatMemberStatus.ADMINISTRATOR,
+                    enums.ChatMemberStatus.OWNER,
+                    enums.ChatMemberStatus.RESTRICTED
+                ]:
+                    await db.remove_join_req(user_id)
+                    logger.info(f"User {user_id} DECLINED/CANCELLED and removed from pending list.")
 
     except AttributeError:
         # Kuch events (jaise title change) mein new_chat_member nahi hota
