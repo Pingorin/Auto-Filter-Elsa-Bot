@@ -18,7 +18,7 @@ from info import (
     SHORTENER_API2, LOG_API_CHANNEL, TWO_VERIFY_GAP, QR_CODE, DELETE_TIME, 
     REQUEST_CHANNEL, REFERRAL_TARGET, PREMIUM_MONTH_DURATION
 )
-from utils import get_settings, save_group_settings, is_req_subscribed, get_size, get_shortlink, is_check_admin, get_status, temp, get_readable_time
+from utils import get_settings, save_group_settings, check_subscription, get_size, get_shortlink, is_check_admin, get_status, temp, get_readable_time
 import re
 import json
 import base64
