@@ -25,7 +25,7 @@ BOT_TOKEN = environ.get('BOT_TOKEN', '8521675661:AAHkiiahCkZqYKUlQ9_xCTshjqMFihO
 ADMINS = [int(admin) if id_pattern.search(admin) else admin for admin in environ.get('ADMINS', '7245547751').split()]
 USERNAME = environ.get('USERNAME', 'https://t.me/ramSitaam')
 LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1003163434752'))
-MOVIE_GROUP_LINK = environ.get('MOVIE_GROUP_LINK', 'https://t.me/+7vxlanrMnWw4N2Fl')
+MOVIE_GROUP_LINK = environ.get('MOVIE_GROUP_LINK', '')
 CHANNELS = [int(ch) if id_pattern.search(ch) else ch for ch in environ.get('CHANNELS', '-1002990033841').split()]
 DATABASE_URI = environ.get('DATABASE_URI', "")
 DATABASE_URI2 = environ.get('DATABASE_URI2', "")
@@ -39,7 +39,7 @@ BIN_CHANNEL = int(environ.get('BIN_CHANNEL', '-1003173929836'))
 URL = environ.get('URL', '')
 
 # verify system vars
-IS_VERIFY = is_enabled('IS_VERIFY', True)
+IS_VERIFY = is_enabled('IS_VERIFY', False)
 LOG_VR_CHANNEL = int(environ.get('LOG_VR_CHANNEL', '-1003179051423'))
 TUTORIAL = environ.get("TUTORIAL", "https://t.me/how_to_dwnload_mov")
 VERIFY_IMG = environ.get("VERIFY_IMG", "https://graph.org/file/1669ab9af68eaa62c3ca4.jpg")
